@@ -1,0 +1,12 @@
+interface:
+  display_name: Assessment Item Reviewer
+  short_description: Cross-subject assessment-report QA with official editorial standards
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
