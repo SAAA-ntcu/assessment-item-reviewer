@@ -5,7 +5,7 @@ description: Review Grades 3-8 assessment-item analysis reports across mathemati
 
 # Assessment Item Reviewer
 
-Version: v2.2 Official Editorial Standards Edition
+Version: v2.3 Confidential Exam & Local Ollama Edition
 
 ## Purpose
 
@@ -371,3 +371,26 @@ Do not ask the author to "find and replace". Mark every location so they can jus
 **ALL comments, explanations, and output text MUST be written in Traditional Chinese (Taiwan) / 繁體中文.** 
 Do NOT output any English explanations in the `comment` field of the JSON. 
 Example: Write "學術語氣：建議將「老師」改為「教師」" instead of "Academic tone: change 老師 to 教師".
+
+## Unpublished Test Booklet Review Protocol (未公開題本命題審查規範)
+
+When the review scope shifts from post-exam reports to unreleased/confidential test booklets (未公開試題題本), enforce the following assessment-authoring standards:
+1. **Air-Gapped & Security Isolation**: Unreleased test items must NEVER be sent to public commercial cloud endpoints. Execute reviews strictly offline via local model instances (e.g., Ollama / local private GPU server).
+2. **Item Stem Clarity & Unique Key**: Flag any ambiguous wording that permits multiple defensible answers or creates unnecessary construct-irrelevant confusion.
+3. **Distractor Plausibility & Structural Symmetry**:
+   - Verify that all options (A, B, C, D / ①, ②, ③, ④) are balanced in length, grammatical structure, and specificity. Flag items where the correct answer is significantly longer or more detailed than distractors (cueing artifact).
+   - Ensure distractors reflect genuine student misconceptions rather than absurd fillers.
+4. **Cueing & Cross-Item Clue Leakage**: Verify that reading passages, contexts, or later items do not inadvertently reveal or hint at answers to earlier questions.
+5. **Grade-Level Readability**: Verify vocabulary, phrasing, and cognitive load match the target grade band (Grades 3-8). Check for correct Bopomofo/phonetics where applicable.
+
+## Offline Local Ollama Pipeline (純離線輕量文字校正管線)
+
+For users handling sensitive or unreleased drafts on standard consumer/office laptops without discrete high-end GPUs:
+- **Architecture**: Use the bundled `scripts/ollama_proofread.py` which implements a paragraph-by-paragraph sliding pipeline.
+- **Model Efficiency**: Designed for 7B/14B lightweight local models (e.g., `qwen2.5:7b` via Ollama) running locally on CPU or basic laptop memory.
+- **Execution**:
+  ```bash
+  python scripts/ollama_proofread.py input.docx --model qwen2.5:7b --url http://localhost:11434
+  ```
+  This performs 100% offline, zero-data-leak proofreading of typos, punctuation, compatibility characters, and tone, while preserving the original DOCX layout and outputting standard Word comments.
+

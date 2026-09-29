@@ -9,6 +9,7 @@
 * `SKILL.md`：核心提示詞與規範（包含強制繁體中文、逐筆標註不去重、學術語氣標準、數學公式視覺驗證規範等）。
 * `references/`：官方課綱標準（包含 108 課綱各科 PDF、教育部官方標點符號手冊、常用詞審查標準）。
 * `scripts/`：無損操作 Word 批註與檢查的 Python 工具集：
+  * `ollama_proofread.py`：**【v2.3 新增】** 支援本機純離線 Ollama（如 `qwen2.5:7b`）之「段落級流水線」，供一般文書筆電在零外洩環境下執行常規文字校對與批註。
   * `add_comments_lxml.py`：以 XML 方式無損寫入真正 Word 批註對話框（具備 N 次重複字元定位記憶，防止同位重疊 Bug）。
   * `check_duplicate_comments.py`：檢查生成的 DOCX 是否有重疊或錯誤堆疊的批註。
   * `docx_to_img.py` / `visual_check.py`：針對數學公式進行 Word COM $\rightarrow$ PDF $\rightarrow$ PNG 視覺渲染除錯工具。
