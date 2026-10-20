@@ -145,14 +145,14 @@ def _append_comment(comments_root: etree._Element, comment_id: int, text: str, a
     t.text = text
 
 
-def _load_spec(path: str) -> list[tuple[str, str]]:
+def _load_spec(path: str) -> list[dict[str, Any]]:
     data: Any = json.loads(Path(path).read_text(encoding="utf-8"))
     if isinstance(data, dict) and "comments" in data:
         data = data["comments"]
     if not isinstance(data, list):
         raise SystemExit("--spec must contain a JSON list or an object with a 'comments' list")
 
-    adds: list[tuple[str, str]] = []
+    adds: list[dict[str, Any]] = []
     for i, item in enumerate(data, start=1):
         if not isinstance(item, dict):
             raise SystemExit(f"--spec item {i} must be an object")
@@ -162,25 +162,34 @@ def _load_spec(path: str) -> list[tuple[str, str]]:
             raise SystemExit(f"--spec item {i} has invalid 'contains'")
         if not isinstance(comment, str) or not comment.strip():
             raise SystemExit(f"--spec item {i} has invalid 'comment'")
-        adds.append((contains, comment))
+        adds.append({
+            "contains": contains,
+            "comment": comment,
+            "exact": bool(item.get("exact", False)),
+            "occurrence": item.get("occurrence"),
+        })
     return adds
 
 
-def _match_paragraphs(doc_root: etree._Element, contains: str, ignore_case: bool) -> list[etree._Element]:
+def _match_paragraphs(doc_root: etree._Element, contains: str, ignore_case: bool, exact: bool = False) -> list[etree._Element]:
     needle = contains.lower() if ignore_case else contains
     hits: list[etree._Element] = []
     for p in doc_root.xpath(".//w:p", namespaces=NS):
         hay = _paragraph_text_for_match(p)
         hay_cmp = hay.lower() if ignore_case else hay
-        if needle in hay_cmp:
-            hits.append(p)
+        if exact:
+            if needle.strip() == hay_cmp.strip():
+                hits.append(p)
+        else:
+            if needle in hay_cmp:
+                hits.append(p)
     return hits
 
 
 def add_comments(
     in_docx: str,
     out_docx: str,
-    adds: list[tuple[str, str]],
+    adds: list[Any],
     author: str,
     ignore_case: bool = False,
     require_all: bool = False,
@@ -193,18 +202,41 @@ def add_comments(
         missing: list[str] = []
         ambiguous: list[tuple[str, int]] = []
 
-        for contains, ctext in adds:
-            hits = _match_paragraphs(doc_root, contains, ignore_case)
+        for item in adds:
+            if isinstance(item, dict):
+                contains = item["contains"]
+                ctext = item["comment"]
+                exact = item.get("exact", False)
+                occ = item.get("occurrence")
+            else:
+                contains, ctext = item
+                exact = False
+                occ = None
+
+            hits = _match_paragraphs(doc_root, contains, ignore_case, exact=exact)
             if not hits:
                 missing.append(contains)
                 print(f"[warn] no paragraph matched contains={contains!r}")
                 continue
             if len(hits) > 1:
-                ambiguous.append((contains, len(hits)))
-                print(f"[warn] ambiguous paragraph anchor contains={contains!r} matches={len(hits)}")
-                if require_unique:
-                    continue
-            plan.append((hits[0], contains, ctext))
+                if occ is not None:
+                    idx = (occ - 1) if occ > 0 else (len(hits) + occ)
+                    if 0 <= idx < len(hits):
+                        target_hit = hits[idx]
+                    else:
+                        missing.append(f"{contains} (occ={occ})")
+                        print(f"[warn] occurrence {occ} out of range (matches={len(hits)}) for {contains!r}")
+                        continue
+                else:
+                    ambiguous.append((contains, len(hits)))
+                    print(f"[warn] ambiguous paragraph anchor contains={contains!r} matches={len(hits)}")
+                    if require_unique:
+                        continue
+                    target_hit = hits[0]
+            else:
+                target_hit = hits[0]
+
+            plan.append((target_hit, contains, ctext))
 
         if require_all and missing:
             raise SystemExit(f"[comments_add] {len(missing)} patterns were not matched: {missing}")
