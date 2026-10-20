@@ -45,7 +45,7 @@ def call_ollama(prompt, model="qwen2.5:7b", base_url="http://localhost:11434"):
 def main():
     parser = argparse.ArgumentParser(description="Ollama 離線 Word 批註校對工具")
     parser.add_argument("input_docx", help="待校對的 Word 檔案路徑")
-    parser.add_argument("--out", help="輸出 Word 檔案路徑（預設為 <原檔名>_第一階段審查.docx）")
+    parser.add_argument("--out", help="輸出 Word 檔案路徑（預設為 <原檔名>_AI校閱結果.docx）")
     parser.add_argument("--model", default="qwen2.5:7b", help="Ollama 模型名稱（預設：qwen2.5:7b）")
     parser.add_argument("--url", default="http://localhost:11434", help="Ollama 服務網址")
     args = parser.parse_args()
@@ -55,7 +55,7 @@ def main():
         print(f"[錯誤] 找不到檔案：{input_path}")
         sys.exit(1)
 
-    out_path = args.out or input_path.replace(".docx", "_第一階段審查.docx")
+    out_path = args.out or input_path.replace(".docx", "_AI校閱結果.docx")
 
     # 1. 抽取段落文字
     ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}

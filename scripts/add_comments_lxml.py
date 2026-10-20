@@ -47,7 +47,8 @@ def add_comments_lxml(docx_path, out_path, spec_json_path):
     for item in comments_to_add:
         search_text = item['contains']
         comment_text = item['comment']
-        author = item.get('author', 'AI Reviewer')
+        author = item.get('author', 'SAAA成果報告校閱AI agent')
+        initials = item.get('initials', 'AI')
         
         wt_nodes = doc_tree.xpath('.//w:t', namespaces=namespaces)
         full_text = "".join([n.text or "" for n in wt_nodes])
@@ -105,6 +106,7 @@ def add_comments_lxml(docx_path, out_path, spec_json_path):
         new_comment = etree.Element(f"{{{namespaces['w']}}}comment")
         new_comment.set(f"{{{namespaces['w']}}}id", str(next_id))
         new_comment.set(f"{{{namespaces['w']}}}author", author)
+        new_comment.set(f"{{{namespaces['w']}}}initials", initials)
         
         p = etree.Element(f"{{{namespaces['w']}}}p")
         r = etree.Element(f"{{{namespaces['w']}}}r")

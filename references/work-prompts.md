@@ -21,7 +21,7 @@
 不要修改正文。
 只在具有實質修訂價值的對應原文加入真正的 Word Comment。
 
-完成後輸出：原檔名_第一階段審查.docx
+完成後輸出：原檔名_AI校閱結果.docx
 不要另外輸出 TXT/Markdown。
 ```
 
@@ -39,7 +39,7 @@
 以實際試題與所有選項為主要判斷依據。
 
 保留正文、格式、圖片、表格與既有 Word 附註，只新增真正的 Word Comment。
-輸出：原檔名_第一階段審查.docx
+輸出：原檔名_AI校閱結果.docx
 ```
 
 ## 3. Science / English / Chinese general-review prompt

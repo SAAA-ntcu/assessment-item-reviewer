@@ -6,7 +6,9 @@ Use this mode for full-document `.docx` review and whenever the user asks for Wo
 
 Use the uploaded DOCX as the base document, but preserve it. Create an annotated copy:
 
-`<original_stem>_第一階段審查.docx`
+`<original_stem>_AI校閱結果.docx`
+
+Default Word comment author: `SAAA成果報告校閱AI agent` (initials: `AI`).
 
 Stage 1 changes only the review layer. Do not alter manuscript body text, tables, images, styles, pagination logic, headers/footers, or numbering unless the user explicitly asks for revisions.
 
@@ -82,7 +84,7 @@ Use `--require_unique` so repeated anchor text is treated as an error rather tha
 When no native comment writer is available, use:
 
 ```bash
-python scripts/comments_add.py input.docx --out reviewed.docx --author "assessment-item-reviewer" \
+python scripts/comments_add.py input.docx --out reviewed.docx --author "SAAA成果報告校閱AI agent" \
   --spec comments-to-add.json \
   --require_all --require_unique
 ```

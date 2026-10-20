@@ -88,7 +88,7 @@ Before full-document execution, perform a capability gate:
 5. Verify comments and anchors after writing.
 6. If true Word comments cannot be produced reliably, stop and report the limitation. Do not silently substitute TXT, Markdown, tracked changes, or inline notes.
 
-Use user-specified paths and filenames when provided. Otherwise create `<original_stem>_第一階段審查.docx`.
+Use user-specified paths and filenames when provided. Otherwise create `<original_stem>_AI校閱結果.docx`.
 
 ## Review workflow
 
@@ -198,7 +198,7 @@ Inspect the complete manuscript for:
 - wrong/missing/repeated characters or words;
 - formal-report preferred wording when the bundled official wording table gives a clear low-risk convention;
 - punctuation form and placement when the bundled punctuation handbook gives a clear rule;
-- punctuation, spacing, full-width/half-width, Traditional/Simplified consistency;
+- punctuation, spacing (含正文中文字詞句間無意義空格 accidental internal spaces，但不含段落縮排、表格版面配置固定排版及公式符號間距), full-width/half-width, Traditional/Simplified consistency;
 - encoding and compatibility characters;
 - number, percentage, unit, symbol, item/table/figure/code formatting;
 - sentence completeness, modifier attachment, antecedents, comparison objects, and ambiguous referents;
@@ -221,7 +221,8 @@ Default contract:
 - Preserve the source file.
 - Do not rewrite body text during Stage 1.
 - Preserve paragraphs, tables, images, styles, numbering, section layout, headers/footers, and existing comments.
-- Return `<original_stem>_第一階段審查.docx` unless the user specifies another filename.
+- Return `<original_stem>_AI校閱結果.docx` unless the user specifies another filename.
+- Default Word comment author is `SAAA成果報告校閱AI agent` (initials: `AI`).
 - Do not return a separate TXT/Markdown register unless requested.
 - Add each comment to the smallest stable source span that supports it.
 - Preserve existing reviewer comments; do not delete, resolve, overwrite, rewrite, or duplicate an existing comment that already covers the same issue.

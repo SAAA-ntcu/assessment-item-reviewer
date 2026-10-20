@@ -23,7 +23,7 @@ Check for:
 - wrong character/word, typo, missing text, duplicated text;
 - omitted connective or particle;
 - punctuation errors and inconsistent Chinese/English punctuation;
-- accidental internal spaces;
+- accidental internal spaces（正文中文字詞句間誤植之無意義半形/全形空格；但嚴格排除段落縮排、表格版面配置固定排版及公式算式符號間距）；
 - duplicated punctuation;
 - incomplete numbering/list markers;
 - residual drafting or production notes.

@@ -131,6 +131,7 @@ def _append_comment(comments_root: etree._Element, comment_id: int, text: str, a
     c = etree.SubElement(comments_root, w("comment"))
     c.set(w("id"), str(comment_id))
     c.set(w("author"), author)
+    c.set(w("initials"), "AI")
     c.set(
         w("date"),
         _dt.datetime.now(_dt.timezone.utc)
@@ -264,7 +265,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Add multiple true Word comments by paragraph substring match")
     ap.add_argument("in_docx")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--author", default="assessment-item-reviewer")
+    ap.add_argument("--author", default="SAAA成果報告校閱AI agent")
     ap.add_argument("--spec", help="UTF-8 JSON comment specification file")
     ap.add_argument(
         "--add",
