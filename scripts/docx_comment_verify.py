@@ -178,6 +178,7 @@ def main() -> None:
     ap.add_argument("reviewed_docx")
     ap.add_argument("--out", required=True)
     ap.add_argument("--require_new", type=int, default=0, help="Require at least N new comments beyond source count")
+    ap.add_argument("--com", action="store_true", help="Perform real Microsoft Word COM opening verification")
     args = ap.parse_args()
 
     report = verify(args.source_docx, args.reviewed_docx)
@@ -191,6 +192,28 @@ def main() -> None:
             "required": args.require_new,
             "actual": new_count,
         }
+
+    if args.com:
+        try:
+            import win32com.client
+            import os
+            word = win32com.client.Dispatch("Word.Application")
+            word.Visible = False
+            word.DisplayAlerts = 0
+            doc = word.Documents.Open(os.path.abspath(args.reviewed_docx))
+            com_comment_count = doc.Comments.Count
+            doc.Close(False)
+            word.Quit()
+            report["checks"]["word_com_verification"] = {
+                "com_open_ok": True,
+                "com_comment_count": com_comment_count
+            }
+        except Exception as e:
+            report["ok"] = False
+            report["checks"]["word_com_verification"] = {
+                "com_open_ok": False,
+                "error": str(e)
+            }
 
     Path(args.out).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[{'OK' if report['ok'] else 'FAIL'}] wrote {args.out} (new_comments={new_count})")

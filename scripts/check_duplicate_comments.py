@@ -1,16 +1,31 @@
+import argparse
 import glob
 import os
+import sys
 import zipfile
 from lxml import etree
 
-V2 = r'C:\Users\adminn\Desktop\V2'
-docx_files = glob.glob(os.path.join(V2, '115 *第一階段審查.docx'))
+parser = argparse.ArgumentParser(description="檢查 Word 檔案是否有同位置重複批註")
+parser.add_argument("path", nargs="?", default=r'C:\Users\adminn\Desktop\V2', help="目標資料夾或 docx 檔案路徑")
+args = parser.parse_args()
+
+target_path = os.path.abspath(args.path)
+if os.path.isfile(target_path):
+    docx_files = [target_path]
+elif os.path.isdir(target_path):
+    docx_files = glob.glob(os.path.join(target_path, '*_AI校閱結果.docx'))
+    if not docx_files:
+        docx_files = glob.glob(os.path.join(target_path, '*第一階段審查.docx'))
+    if not docx_files:
+        docx_files = glob.glob(os.path.join(target_path, '*.docx'))
+else:
+    docx_files = []
 
 ns = {
     'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
 }
 
-print("開始檢查 Word 檔案是否有「同位置重複批註」...\n")
+print(f"開始檢查 Word 檔案是否有「同位置重複批註」 (共 {len(docx_files)} 個檔案)...\n")
 
 for docx in docx_files:
     print(f"Checking: {os.path.basename(docx)}")

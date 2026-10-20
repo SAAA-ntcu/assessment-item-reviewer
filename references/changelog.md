@@ -1,6 +1,29 @@
 # Changelog
 
-## v2.2 — Official Editorial Standards Edition
+## v2.6 — Visual Snapshot & Layout Integrity Edition (視覺快照光柵辨識與印務排版檢驗版)
+
+- **Scanned Booklet & Graphic Pages Protocol (光柵掃描與題本防呆檢驗規範)**: Resolved the critical LLM pure-text failure mode where pages with zero selectable text (e.g. Reading Passages on P56/P63/P68/P77 and Appendix Official Test Booklets on P97~P112) were falsely hallucinated as "residual empty page breaks". Enforced the Three-Point Verification Rule (text == 0, images == 0, pixel ratio < 0.005) before declaring any page blank.
+- **Cross-Page Table Header Audit (`w:tblHeader`)**: Mandated inspection of multi-page item analysis tables for missing header repetition, ensuring teachers do not lose metadata context when reading split tables across pages.
+- **Image Resolution & Downscaling Audit**: Enforced minimum readability threshold (>= 300px) for question stem diagrams to prevent blurry or illegible illustrations (e.g. Eng8 Q25).
+- **Japanese Font Fallback Audit (`MS-Gothic`)**: Added automated detection for Japanese font substitution triggered by non-standard circled numbers or bullets, recommending standardization to Taiwan system fonts.
+- **Automated Diagnostic Tool (`scripts/layout_visual_qa.py`)**: Added integrated script to automatically classify blank vs. scanned pages, audit `tblHeader` compliance, detect font pollution, and extract all slash occurrences.
+- **Synchronization of Exhaustive Flagging**: Updated `language-editorial-qa.md` to eliminate legacy deduplication advice and mandate individual annotations for all slash and symbol errors.
+
+## v2.5 — Exhaustive Symbol & Slashes Rule Edition
+
+- **Exhaustive Slashes & Symbols Flagging (西文斜線與全半形符號每一處皆須抓出)**: Eliminated older deduplication/consolidation guidelines for full/half-width symbols. Mandated that all Western slashes (e.g. `have/has/had to`, `Yes/No`, `O/X`, `one/first`), full-width digits (`１２３`), and punctuation violations must be individually anchored and commented at every single occurrence across all paragraphs and tables.
+- **Updated Guidelines**: Synchronized `SKILL.md`, `references/language-editorial-qa.md`, and `references/punctuation-guide.md` with the zero-deduplication exhaustive annotation policy.
+
+## v2.4 — Visual Verification, Word Integrity & Dedicated Reviewer Agent Edition
+
+- **Reviewer Persona & Author**: Unified default comment author to `SAAA成果報告校閱AI agent` (initials: `AI`), replacing generic/academic editor names.
+- **Output Filename Pattern**: Standardized default annotated output to `<original_stem>_AI校閱結果.docx`.
+- **Comprehensive Visual & Layout Protocol**: Added strict 3-step visual verification pipeline (Visual Gate, Snapshot Rendering via `docx_to_img.py`, and Acceptance Checklist Verification for "-已修改" items) to completely eliminate false-positive ghost comments caused by DrawingML/Shape/Canvas invisibility in pure-text parsing.
+- **Whitespace Rules (文句間無意義空格規範)**: Explicitly defined mandatory flags for accidental internal spaces breaking Chinese words/sentences while establishing strict exemptions for paragraph indents, table cell layout, alphanumeric spacing, math formulas, and item numbering.
+- **Word Document Integrity & COM Verification**: Enforced safe streaming injection via `comments_add.py` (with standard ISO 8601 UTC `w:date` and relationship preservation) to prevent OOXML corruption; added real Microsoft Word COM automation testing (`--com`) to `docx_comment_verify.py`.
+- **Global Skill Deployment**: Synchronized skill package to Antigravity global configuration (`~/.gemini/config/skills/assessment-item-reviewer`).
+
+## v2.3 — Confidential Exam & Local Ollama Edition
 
 - Add the supplied official unified-wording table and revised punctuation handbook as bundled editorial source PDFs.
 - Add `editorial-style-guide.md`, `unified-wording-guide.md`, and `punctuation-guide.md` for progressive loading during formal-report Language & Semantic QA.

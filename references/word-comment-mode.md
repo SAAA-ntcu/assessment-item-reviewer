@@ -105,9 +105,20 @@ Verify:
 - the expected number of comments exists;
 - each expected comment has an anchor;
 - no source comments were removed;
-- unmatched anchor warnings are zero for required comments.
+- unmatched anchor warnings are zero for required comments;
+- on Windows, run silent Word COM automation verification (`win32com.client.Dispatch("Word.Application")`) to ensure 100% clean opening with 0 repair popups and 0 corruption dialogs.
 
-If a render/preview capability is available, compare the annotated copy with the source to confirm that the manuscript body layout remains intact. Comments themselves may not appear in headless PDF rendering, so structural comment verification remains mandatory.
+## Strict OOXML & File Integrity Rules (防檔案毀損鐵則)
+
+1. **Do NOT Unpack/Repack to Disk**:
+   Never extract all DOCX files to a temporary directory and re-archive. This breaks media relationships (orphan images like `image20.png` are dropped, shifting `rId` mappings in `document.xml.rels`) and triggers Microsoft Word "Unreadable Content" errors.
+2. **Authoritative Insertion Tool**:
+   Always use `scripts/comments_add.py`. It streams and selectively modifies only `word/document.xml`, `word/comments.xml`, `[Content_Types].xml`, and `word/_rels/document.xml.rels`, ensuring byte-level preservation of media, styles, and settings.
+3. **Comment Metadata Standards**:
+   Every `<w:comment>` element MUST include:
+   - `w:author="SAAA成果報告校閱AI agent"`
+   - `w:initials="AI"`
+   - `w:date="YYYY-MM-DDTHH:MM:SSZ"` (ISO 8601 UTC)
 
 ## Failure handling
 

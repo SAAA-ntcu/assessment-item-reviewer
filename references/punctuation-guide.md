@@ -35,7 +35,7 @@ Common forms relevant to reports include:
 7. In Chinese prose, use `……` for ellipsis rather than ad hoc sequences of periods.
 8. `《》` is primarily used for book/document-level titles and `〈〉` for article/chapter-level titles; judge by the role of the cited work.
 9. For time/space/quantity ranges, both `—` and `～` are accepted alternatives in the handbook. Do not call one wrong; prefer report-level consistency.
-10. Repeated mixed full-width/half-width punctuation may be handled as one consistency problem when useful.
+10. Full-width/half-width symbol consistency (每一處都要抓出來): For Western slashes (e.g. have/has/had to, Yes/No, O/X) or mixed punctuation, flag EVERY SINGLE OCCURRENCE individually rather than using a whole-document summary.
 
 ## Decision rules
 

@@ -3,6 +3,7 @@ import sys
 import os
 import json
 import shutil
+import datetime as _dt
 from lxml import etree
 import re
 
@@ -107,6 +108,10 @@ def add_comments_lxml(docx_path, out_path, spec_json_path):
         new_comment.set(f"{{{namespaces['w']}}}id", str(next_id))
         new_comment.set(f"{{{namespaces['w']}}}author", author)
         new_comment.set(f"{{{namespaces['w']}}}initials", initials)
+        new_comment.set(
+            f"{{{namespaces['w']}}}date",
+            _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        )
         
         p = etree.Element(f"{{{namespaces['w']}}}p")
         r = etree.Element(f"{{{namespaces['w']}}}r")
@@ -126,9 +131,14 @@ def add_comments_lxml(docx_path, out_path, spec_json_path):
             content_types = content_types.replace('</Types>', override_str + '</Types>')
             
         rel_ns = {'rel': 'http://schemas.openxmlformats.org/package/2006/relationships'}
-        rel_id = f"rId{len(rels_tree.xpath('.//rel:Relationship', namespaces=rel_ns)) + 1}"
+        existing_rids = []
+        for r_el in rels_tree.xpath('.//rel:Relationship', namespaces=rel_ns):
+            m = re.fullmatch(r"rId(\d+)", r_el.get("Id", ""))
+            if m:
+                existing_rids.append(int(m.group(1)))
+        new_rid = f"rId{(max(existing_rids) + 1) if existing_rids else 1}"
         new_rel = etree.Element(f"{{{rel_ns['rel']}}}Relationship")
-        new_rel.set('Id', rel_id)
+        new_rel.set('Id', new_rid)
         new_rel.set('Type', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments')
         new_rel.set('Target', 'comments.xml')
         rels_tree.append(new_rel)

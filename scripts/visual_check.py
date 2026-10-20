@@ -46,21 +46,45 @@ def find_and_render_pages(pdf_path, search_terms, out_dir):
     return found
 
 if __name__ == '__main__':
-    # M8 main report
-    targets = [
-        ('學力檢測分析報告_115_M8_良_V2.docx', 'M8主報告', ['2482', '4x2+4x', '2482-']),
-        ('學力檢測分析報告_115_M7_良_v2.docx', 'M7主報告', ['123=36', '122=6', '483=16', '48+x=3']),
-        ('學力檢測分析報告_115_M4_良_V2.docx', 'M4主報告', ['63300']),
-    ]
-    
-    for docx, label, terms in targets:
-        docx_path = os.path.join(r'C:\Users\adminn\Desktop\V2', docx)
-        pdf_path = docx_path.replace('.docx', '_vis.pdf')
-        out_dir = os.path.join(r'C:\Users\adminn\Desktop\V2', f'vis_{label}')
+    import argparse
+    parser = argparse.ArgumentParser(description="Find pages in DOCX containing terms and render to PNG images")
+    parser.add_argument("docx", nargs="?", help="Path to input DOCX")
+    parser.add_argument("--terms", help="Comma-separated search terms (e.g. '圖A,圖B,63300')")
+    parser.add_argument("--out", help="Output directory for rendered PNGs")
+    args = parser.parse_args()
+
+    if args.docx:
+        terms = [t.strip() for t in args.terms.split(",")] if args.terms else [""]
+        out_dir = args.out or os.path.join(os.path.dirname(os.path.abspath(args.docx)), "vis_rendered")
+        pdf_path = os.path.abspath(args.docx).replace(".docx", "_temp_vis.pdf")
         
-        print(f"\nConverting {label}...")
-        docx_to_pdf(docx_path, pdf_path)
-        print(f"Finding formula pages...")
+        print(f"Converting {args.docx} to PDF...")
+        docx_to_pdf(args.docx, pdf_path)
+        print(f"Scanning pages for terms {terms}...")
         found = find_and_render_pages(pdf_path, terms, out_dir)
-        print(f"Found: {found}")
-        os.remove(pdf_path)
+        print(f"Results: {found}")
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        print(f"Visual check complete. Images saved in: {out_dir}")
+    else:
+        # Default M8/M7/M4 test targets
+        targets = [
+            ('學力檢測分析報告_115_M8_良_V2.docx', 'M8主報告', ['2482', '4x2+4x', '2482-']),
+            ('學力檢測分析報告_115_M7_良_v2.docx', 'M7主報告', ['123=36', '122=6', '483=16', '48+x=3']),
+            ('學力檢測分析報告_115_M4_良_V2.docx', 'M4主報告', ['63300']),
+        ]
+        
+        for docx, label, terms in targets:
+            docx_path = os.path.join(r'C:\Users\adminn\Desktop\V2', docx)
+            if not os.path.exists(docx_path):
+                continue
+            pdf_path = docx_path.replace('.docx', '_vis.pdf')
+            out_dir = os.path.join(r'C:\Users\adminn\Desktop\V2', f'vis_{label}')
+            
+            print(f"\nConverting {label}...")
+            docx_to_pdf(docx_path, pdf_path)
+            print(f"Finding formula pages...")
+            found = find_and_render_pages(pdf_path, terms, out_dir)
+            print(f"Found: {found}")
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)

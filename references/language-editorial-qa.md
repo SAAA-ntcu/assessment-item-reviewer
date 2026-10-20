@@ -23,7 +23,7 @@ Check for:
 - wrong character/word, typo, missing text, duplicated text;
 - omitted connective or particle;
 - punctuation errors and inconsistent Chinese/English punctuation;
-- accidental internal spaces（正文中文字詞句間誤植之無意義半形/全形空格；但嚴格排除段落縮排、表格版面配置固定排版及公式算式符號間距）；
+- accidental internal spaces（正文中文字詞句間誤植之無意義半形/全形空格，例如「國小 階段」應改為「國小階段」、「進行 試題 分析」應改為「進行試題分析」；但嚴格排除：(1)段落首行縮排或懸掛縮排空格、(2)表格內部儲存格排版與置中對齊空格、(3)中英文/數字夾雜間之排版微調空格、(4)數學算式與運算符號前後空格、(5)題號或清單序號與標題間隔空格）；
 - duplicated punctuation;
 - incomplete numbering/list markers;
 - residual drafting or production notes.
@@ -36,7 +36,7 @@ For author-created formal report prose, apply the official editorial baselines l
 - When the distinction depends on noun/verb status or meaning, determine context before correcting; never blind-replace.
 - When the punctuation handbook explicitly permits more than one form, do not call either form wrong. Treat mixed use only as a consistency issue when worth commenting on.
 - Preserve verbatim quotations, reproduced source text, formulas, code, URLs, English passages, and discipline-specific notation unless the issue is itself within the review scope or changes meaning.
-- For repeated mechanical patterns, prefer one representative whole-document comment rather than duplicate comments throughout the file.
+- Strictly follow the Explicit Exhaustive Annotation Rule: For recurring errors (such as full-width slashes in Western terms, full-width digits, punctuation typos, or wording violations), do NOT consolidate into a single global comment. Flag EVERY SINGLE OCCURRENCE on its exact anchor so the author can review them one by one.
 
 ## 3. L2 encoding and formatting QA
 
@@ -49,7 +49,7 @@ Check for:
 - inconsistent number, percentage, unit, item/table/figure/code formatting;
 - unstable symbols that may fail across Word/PDF export.
 
-Report recurring mechanical patterns once with representative examples when practical.
+Under the Explicit Exhaustive Annotation Rule, flag every single occurrence of full-width/half-width symbol violations (e.g. Western full-width slashes '／', full-width digits '１２３') across all paragraphs and tables.
 
 ## 4. L3 sentence syntax and semantic clarity
 
@@ -146,9 +146,8 @@ When a rendered DOCX/PDF/page image is available:
 For full-document review:
 
 - keep substantive issues in the main item/section review register;
-- group recurring mechanical corrections when practical;
-- elevate language issues when they change item/data/curriculum/teaching interpretation;
-- do not overwhelm the reviewer with repeated instances of the same pattern.
+- enforce the Explicit Exhaustive Annotation Rule (零去重、每一處皆須獨立抓出)：凡是西文斜線「／」混用、全形數字「１２３」、錯別字或標點符號違規，嚴禁以概括性方式整合為單一全域批註，每一處均必須精確錨定並建立獨立批註，便於作者逐一驗收修改；
+- elevate language issues when they change item/data/curriculum/teaching interpretation.
 
 For simple corrections, use `位置 / 原文 / 建議` when helpful.
 For semantic ambiguity/coherence, use `位置 / 原文 / 問題 / 建議` when helpful.
