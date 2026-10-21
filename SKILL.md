@@ -426,6 +426,23 @@ In addition to text proofreading, conduct visual layout inspections using snapsh
    - For language test reports, when a reading passage is presented on one page (e.g., P56) but the corresponding test items span across 3-4 subsequent pages (e.g., P57, P58, P59), examine whether teachers can easily reference the passage.
    - If the stimulus is pushed too far from the item analysis, suggest optimizing layout pagination or referencing the stimulus location clearly.
 
+6. **Table of Contents (TOC) & Front Matter Structure Audit (目錄與卷首架構深度檢驗規範)**:
+   - **SDT Container Traversal (突破 XML 容器盲區)**:
+     - Word's TOC is encapsulated inside `<w:sdt>` (Structured Document Tag). Standard Python text extractors only parse `w:body/w:p` and miss the TOC entirely. Review engines MUST use `lxml` to traverse `//w:sdt//w:p` to audit TOC paragraphs.
+   - **Self-Referencing TOC Sentinel (目錄自我引用致命防呆)**:
+     - Detect whether the TOC heading itself was assigned an outline level (e.g., Heading 1 or Outline Level 1) and mistakenly indexed into the TOC (e.g., `目錄 .................... 3`). If found, flag as a **Fatal Word Style Error** requiring resetting the TOC banner to normal body style.
+   - **Dot Leader & Tab Stop Inconsistency (引導線黏連與定位點參差檢驗)**:
+     - Audit `<w:tabs>` across paragraphs of the same hierarchical level (e.g., all TOC 2 entries). Detect custom or conflicting `<w:tab w:pos="...">` definitions (e.g., when an author manually clicks the ruler, inserting an extra left tab at 1440 twips). This causes leader dots in short titles (e.g., `一、背景................1`) to abut the text with zero margin, while longer titles (e.g., `一、檢測對象 ............3`) have leading whitespace. Standardize all TOC paragraphs to a single right-aligned dot-leader tab stop.
+   - **Expanded Character Kerning Aberrations (`w:spacing` 鬆散散架檢驗)**:
+     - Flag short chapter titles (<= 4 characters, e.g., `柒、附錄` or `目錄`) styled with expanded character spacing (`w:spacing >= 20`, 1pt+ expansion). This creates an optical defect where characters appear disjointed (`柒 、 附 錄`), frequently misinterpreted as rogue manual spaces or clumsy typesetting.
+   - **Chapter Coverage & Structural Depth Balance (長篇核心章節目錄斷層檢驗)**:
+     - When a major analytical chapter (e.g., Chapter 4「試題分析與教學建議」) spans > 15 pages or constitutes over 30% of the entire report (dozens of test items), but has **zero sub-headings** in the TOC while 1-page front chapters list 2nd-level sub-items, flag as a **Structural Depth Imbalance**. Recommend expanding Chapter 4 into item numbers or cognitive dimensions to give readers navigable access.
+   - **Lists of Tables & Figures Mandate (表次與圖次完備性檢驗)**:
+     - When a report contains >= 5 data tables or >= 3 analytical charts/stimuli (e.g., IRT/CTT parameter tables, normal score distributions), verify the presence of formal **List of Tables (表目錄 / 表次)** and **List of Figures (圖目錄 / 圖次)**. If missing, advise compiling them before final publication.
+   - **Heading & Page Number Synchronicity (目錄頁碼與大綱標題同步性核實)**:
+     - Verify that heading strings in the TOC match actual chapter titles in the body (including whether `壹、` is hardcoded or Word-numbered), and verify TOC page numbers against actual PDF rendered pages.
+
+
 
 ## Word Document Integrity & COM Verification Protocol (Word 文件結構完整性與毀損防呆規範)
 
