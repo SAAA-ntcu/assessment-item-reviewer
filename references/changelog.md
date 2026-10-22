@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.7 — Proper Noun Marks (私名號／專名號) & Table of Contents Deep Audit Edition
+
+- **Proper Noun Marks (專名號／私名號) & Underline QA Protocol**:
+  - Added full specification for Taiwan proper noun marks (專名號／私名號) following Ministry of Education guidelines.
+  - Mandated exclusion of titles and honorifics (e.g. `<u>孫中山</u>先生`, `<u>李</u>校長`, `<u>楊</u>醫生`).
+  - Added boundary and punctuation leakage prevention (ensuring underlines never spill over to commas, enumeration commas, or brackets).
+  - Added Intra-Item Option Synchronicity checking: flags discrepancies when an option stem or choice omits an underline present in other choices (e.g. Grade 3 Chinese Q16 where option 1 omitted the underline on「繽繽」while options 2, 3, 4 had it).
+  - Added document-level macro consistency: detects and alerts when Chapter 1 background marks all 18 counties with proper noun marks, while Chapters 2, 5, and 6 leave them completely unmarked.
+- **Table of Contents (TOC) & Front Matter Structure Audit**:
+  - Traversal of Word `<w:sdt>` containers to overcome the standard python-docx TOC parsing blind spot.
+  - Detection of the fatal self-referencing TOC error (e.g. Word indexing「目錄 3」into the TOC itself).
+  - Inconsistent tab stop and dot leader audit (identifying rogue manual ruler drag settings such as `pos="1440"` causing leader dots to jam against text).
+  - Expanded character spacing (`w:spacing >= 20`) detection on short chapter headings (e.g. loose, detached「柒、 附 錄」).
+  - Chapter depth imbalance detection: flags core analytical chapters spanning > 15 pages (e.g. Chapter 4) with zero sub-entries in TOC while 1-page front chapters list sub-entries.
+  - Lists of Tables and Figures (表次／圖次) mandate: verifies front matter completeness when reports contain >= 5 tables or >= 3 figures.
+- **Tool Enhancement (`scripts/layout_visual_qa.py`)**:
+  - Integrated `audit_docx_toc()` and `audit_proper_noun_marks()` into the unified QA CLI tool.
+
 ## v2.6 — Visual Snapshot & Layout Integrity Edition (視覺快照光柵辨識與印務排版檢驗版)
 
 - **Scanned Booklet & Graphic Pages Protocol (光柵掃描與題本防呆檢驗規範)**: Resolved the critical LLM pure-text failure mode where pages with zero selectable text (e.g. Reading Passages on P56/P63/P68/P77 and Appendix Official Test Booklets on P97~P112) were falsely hallucinated as "residual empty page breaks". Enforced the Three-Point Verification Rule (text == 0, images == 0, pixel ratio < 0.005) before declaring any page blank.

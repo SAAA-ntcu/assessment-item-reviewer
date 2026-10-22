@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-layout_visual_qa.py - Comprehensive Layout, Visual & TOC Verification Tool for SAAA Reports
+layout_visual_qa.py - Comprehensive Layout, Visual, TOC & Proper Noun Marks Verification Tool for SAAA Reports
 
 Performs automated visual and structural QA:
 1. Blank vs. Scanned/Graphic Page Classification (prevents hallucinating scanned booklets as empty pages)
@@ -14,6 +14,12 @@ Performs automated visual and structural QA:
 4. Image Resolution & Downscaling Audit (<300px tiny images)
 5. Embedded Font Family & Japanese Fallback Audit (MS-Gothic check)
 6. Exhaustive Western Slash (／ vs /) Inventory
+7. Proper Noun Mark (專名號／私名號) & Underline Audit:
+   - Run stitching for split words across runs (e.g. 臺 + 中市)
+   - Boundary & punctuation leakage check (e.g. <u>臺北市、</u>)
+   - Title and honorific inclusion check (e.g. <u>李校長</u> -> <u>李</u>校長)
+   - Intra-item option synchronicity check (e.g. Q16 option 1 missing underline on 繽繽 while options 2,3,4 have it)
+   - Document-level macro double-standard check (e.g. Chapter 1 underlines 18 counties while later chapters leave all plain)
 """
 
 import sys
@@ -39,7 +45,6 @@ def audit_pdf_pages(pdf_path):
         text = page.get_text().strip()
         images = page.get_images()
         
-        # Pixmap check for non-white pixel ratio
         pix = page.get_pixmap(dpi=72)
         total_pixels = pix.width * pix.height
         samples = pix.samples
@@ -284,6 +289,186 @@ def audit_slashes(docx_path):
     z.close()
     return full_slashes, half_slashes
 
+def audit_proper_noun_marks(docx_path):
+    """Audit Proper Noun Marks (專名號／私名號) & Underlines for consistency, boundary leaks, and option parity."""
+    z = zipfile.ZipFile(docx_path)
+    xml = etree.fromstring(z.read("word/document.xml"))
+    
+    punct_chars = set("，、。！？；：」』）》〉…—～,.!?;:'\")")
+    titles = [
+        "先生", "女士", "校長", "教授", "醫生", "醫師", "主任", "組長", 
+        "院長", "部長", "局長", "課長", "科長", "縣長", "市長", "伯伯", 
+        "阿姨", "叔叔", "同學", "老師", "教師", "將軍", "總統", "主席", "隊長"
+    ]
+    
+    counties = [
+        "基隆市", "新北市", "臺北市", "台北市", "桃園市", "新竹縣", "新竹市", "苗栗縣", 
+        "臺中市", "台中市", "南投縣", "彰化縣", "雲林縣", "嘉義縣", "嘉義市", "臺南市", 
+        "台南市", "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "台東縣", "澎湖縣", 
+        "金門縣", "連江縣"
+    ]
+    
+    # Filter out TOC sdt paragraphs to avoid polluting chapter detection
+    body_paragraphs = xml.xpath('//w:p[not(ancestor::w:sdt)]', namespaces=NS)
+    
+    underlined_segments = []
+    punctuation_leaks = []
+    title_inclusions = []
+    option_inconsistencies = []
+    macro_county_stats = {"ch1_counties": 0, "later_counties_underlined": 0, "later_counties_plain": 0}
+    
+    item_options = {}
+    current_item_key = None
+    in_ch1 = False
+    
+    for p_idx, p in enumerate(body_paragraphs):
+        p_text = "".join(p.xpath('.//w:t/text()', namespaces=NS)).strip()
+        if not p_text:
+            continue
+            
+        # Detect Chapter transitions cleanly
+        if "背景與目的" in p_text:
+            in_ch1 = True
+        elif in_ch1 and any(h in p_text for h in ["參與縣市與檢測規模", "檢測對象與檢測工具", "試題分析與教學建議", "整體學力表現分析"]):
+            in_ch1 = False
+            
+        runs = p.xpath('.//w:r', namespaces=NS)
+        
+        # Stitch adjacent runs with underline
+        p_underlined_words = []
+        curr_text = ""
+        curr_u_val = None
+        
+        for r in runs:
+            u = r.xpath('./w:rPr/w:u/@w:val', namespaces=NS)
+            t = "".join(r.xpath('.//w:t/text()', namespaces=NS))
+            is_u = bool(u and u[0] != "none")
+            
+            if is_u:
+                if curr_u_val == u[0]:
+                    curr_text += t
+                else:
+                    if curr_text:
+                        p_underlined_words.append((curr_text, curr_u_val))
+                    curr_text = t
+                    curr_u_val = u[0]
+            else:
+                if curr_text:
+                    p_underlined_words.append((curr_text, curr_u_val))
+                    curr_text = ""
+                    curr_u_val = None
+        if curr_text:
+            p_underlined_words.append((curr_text, curr_u_val))
+            
+        # Process each stitched underlined word
+        for text, u_val in p_underlined_words:
+            underlined_segments.append({
+                "para_idx": p_idx + 1,
+                "text": text,
+                "u_val": u_val,
+                "context": p_text[:70]
+            })
+            
+            # 1. Punctuation leakage check (leading or trailing punctuation inside underline)
+            leaked = [c for c in text if c in punct_chars]
+            if leaked:
+                punctuation_leaks.append({
+                    "para_idx": p_idx + 1,
+                    "text": text,
+                    "leaked": "".join(leaked),
+                    "context": p_text[:70]
+                })
+                
+            # 2. Title inclusion check
+            for title in titles:
+                if text.endswith(title) and len(text) > len(title):
+                    title_inclusions.append({
+                        "para_idx": p_idx + 1,
+                        "text": text,
+                        "title": title,
+                        "suggested": f"{text[:-len(title)]}（劃線）+ {title}（不劃線）",
+                        "context": p_text[:70]
+                    })
+                    
+            # Track county underlines for macro consistency
+            for c in counties:
+                if c in text:
+                    if in_ch1:
+                        macro_county_stats["ch1_counties"] += 1
+                    else:
+                        macro_county_stats["later_counties_underlined"] += 1
+
+        # Track plain county names in later chapters
+        if not in_ch1:
+            for c in counties:
+                if c in p_text:
+                    if not any(c in w[0] for w in p_underlined_words):
+                        macro_county_stats["later_counties_plain"] += 1
+
+        # 3. Detect option paragraphs for intra-item option synchronicity
+        opt_match = re.match(r'^(?:【?選項\s*([①②③④1234ABCDabcdA-D])】?|[(（]([ABCDabcd1234])[)）]|([①②③④]))[:：、.]?\s*(.*)', p_text)
+        if opt_match:
+            opt_id = opt_match.group(1) or opt_match.group(2) or opt_match.group(3)
+            if opt_id in ['①', '1', 'A', 'a']:
+                current_item_key = f"Item_at_P{p_idx+1}"
+                item_options[current_item_key] = []
+            if current_item_key:
+                item_options[current_item_key].append({
+                    "para_idx": p_idx + 1,
+                    "opt_id": opt_id,
+                    "text": p_text,
+                    "underlined": [w[0] for w in p_underlined_words]
+                })
+        else:
+            if current_item_key and len(item_options[current_item_key]) >= 2 and not p_text.startswith("選項"):
+                current_item_key = None
+
+    # Check option groups for inconsistency
+    for item_key, opts in item_options.items():
+        if len(opts) < 2:
+            continue
+        all_underlined = set()
+        for opt in opts:
+            for u_word in opt["underlined"]:
+                if len(u_word) >= 2:
+                    all_underlined.add(u_word)
+                    
+        for target_word in all_underlined:
+            opts_with_u = [o["opt_id"] for o in opts if target_word in o["underlined"]]
+            opts_with_plain = []
+            for o in opts:
+                if target_word not in o["underlined"] and target_word in o["text"]:
+                    opts_with_plain.append((o["opt_id"], o["para_idx"], o["text"][:60]))
+                    
+            if opts_with_plain:
+                for plain_opt_id, plain_p_idx, snippet in opts_with_plain:
+                    option_inconsistencies.append({
+                        "item": item_key,
+                        "word": target_word,
+                        "opts_with_underline": opts_with_u,
+                        "missing_opt_id": plain_opt_id,
+                        "para_idx": plain_p_idx,
+                        "context": snippet,
+                        "issue": f"同一試題選項間專名號不一致：選項 {','.join(opts_with_u)} 標有「{target_word}」之專名號（底線），但選項 {plain_opt_id}（P{plain_p_idx}）出現相同專名卻漏劃底線！"
+                    })
+
+    # Macro consistency alert
+    macro_warnings = []
+    if macro_county_stats["ch1_counties"] >= 10 and macro_county_stats["later_counties_plain"] >= 10 and macro_county_stats["later_counties_underlined"] == 0:
+        macro_warnings.append({
+            "issue": f"全卷專名號雙軌體例矛盾：第壹章前言標註了 {macro_county_stats['ch1_counties']} 處縣市專名號（底線），但後續章節提及相同縣市名 {macro_county_stats['later_counties_plain']} 次均未標註底線。若正式結案報告正文不採用專名號，建議前言統一移除；若採用，則應全卷一致標註。"
+        })
+        
+    z.close()
+    return {
+        "total_underlined_segments": len(underlined_segments),
+        "underlined_segments": underlined_segments,
+        "punctuation_leaks": punctuation_leaks,
+        "title_inclusions": title_inclusions,
+        "option_inconsistencies": option_inconsistencies,
+        "macro_warnings": macro_warnings
+    }
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python layout_visual_qa.py <docx_or_pdf_file>")
@@ -294,7 +479,7 @@ def main():
     pdf_path = target if target.endswith(".pdf") else f"{stem}.pdf"
     docx_path = target if target.endswith(".docx") else f"{stem}.docx"
     
-    print(f"=== Layout & Visual QA Audit: {os.path.basename(target)} ===")
+    print(f"=== Layout, Visual, TOC & Proper Noun QA Audit: {os.path.basename(target)} ===")
     
     if os.path.exists(pdf_path):
         print("\n[1] Page Visual & Raster Classification (PyMuPDF):")
@@ -353,6 +538,37 @@ def main():
         print(f"  Full-width slashes (／): {len(full_s)} occurrences")
         print(f"  Half-width slashes (/): {len(half_s)} occurrences")
         
+        print("\n[6] Proper Noun Mark (專名號／私名號) & Underline Audit:")
+        pnm_res = audit_proper_noun_marks(docx_path)
+        print(f"  Total underlined segments: {pnm_res['total_underlined_segments']}")
+        if pnm_res["punctuation_leaks"]:
+            print(f"  [WARNING] Punctuation leakage in proper noun marks ({len(pnm_res['punctuation_leaks'])} found):")
+            for pl in pnm_res["punctuation_leaks"][:5]:
+                print(f"    - P{pl['para_idx']}: 「{pl['text']}」（包含符號「{pl['leaked']}」）")
+        else:
+            print("  No punctuation leakage detected.")
+            
+        if pnm_res["title_inclusions"]:
+            print(f"  [WARNING] Titles/Honorifics mistakenly underlined ({len(pnm_res['title_inclusions'])} found):")
+            for ti in pnm_res["title_inclusions"][:5]:
+                print(f"    - P{ti['para_idx']}: 「{ti['text']}」-> 建議調整為：{ti['suggested']}")
+        else:
+            print("  No title/honorific inclusion detected.")
+            
+        if pnm_res["option_inconsistencies"]:
+            print(f"  [CRITICAL] Intra-item option proper noun mark inconsistencies ({len(pnm_res['option_inconsistencies'])} found):")
+            for oi in pnm_res["option_inconsistencies"]:
+                print(f"    - {oi['issue']}")
+        else:
+            print("  No intra-item option inconsistencies detected.")
+            
+        if pnm_res["macro_warnings"]:
+            print(f"  [POLICY WARNING] Document-level macro double-standard warnings:")
+            for mw in pnm_res["macro_warnings"]:
+                print(f"    - {mw['issue']}")
+        else:
+            print("  Macro proper noun mark policy appears consistent.")
+            
     print("\nAudit complete.")
 
 if __name__ == "__main__":

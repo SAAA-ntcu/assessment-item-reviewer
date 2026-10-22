@@ -442,6 +442,22 @@ In addition to text proofreading, conduct visual layout inspections using snapsh
    - **Heading & Page Number Synchronicity (目錄頁碼與大綱標題同步性核實)**:
      - Verify that heading strings in the TOC match actual chapter titles in the body (including whether `壹、` is hardcoded or Word-numbered), and verify TOC page numbers against actual PDF rendered pages.
 
+7. **Proper Noun Mark (專名號／私名號) & Underline QA Protocol (專名號與底線標記深度檢驗規範)**:
+   - **Semantic Scope & Categories (專名號適用範疇與詞性界線)**:
+     - 依教育部《重訂標點符號手冊》修訂版，橫式排版中專名號標於專名下方（Word OOXML 表現為 `<w:u w:val="single"/>` 底線）。
+     - 嚴格限定用於：人名（如李白、孫中山）、族名（如阿美族）、國名/地名（如臺灣、臺北市、基隆市）、機構名（如教育部、國立臺中教育大學）、路線名（如中山高速公路、國道一號）。普通名詞、動詞、副詞等嚴禁誤套專名號（若為教學強調之底線，應與專名號區隔）。
+   - **Exclusion of Titles & Honorifics (官銜職稱通稱嚴禁連帶劃線)**:
+     - 專名號僅能標記於「專名本體」，絕對不可將後續之官銜、職稱、輩分或身分通稱連帶劃底線（例如：⭕ 正確為 `<u>孫中山</u>先生`、`<u>李</u>校長`、`<u>楊</u>醫生`、`<u>陳</u>同學`；❌ 嚴禁劃成 `<u>孫中山先生</u>`、`<u>李校長</u>`、`<u>楊醫生</u>`）。
+   - **Boundary & Punctuation Leakage Defense (標點符號溢標防呆)**:
+     - 專名號之底線範圍嚴禁溢劃至相鄰的全半形標點符號（例如：⭕ 正確為 `<u>臺北市</u>、`、`「<u>伊索</u>」`；❌ 嚴禁選取過界劃成 `<u>臺北市、</u>`、`<u>「伊索」</u>`）。
+   - **Intra-Item Option Synchronicity (同一試題選項間標註一致性)**:
+     - 國語文試題題幹與選項 ①、②、③、④ 中，若出現同一專有名詞（如鸚鵡名「繽繽」、主角「阿凡提」），各選項間的專名號底線必須 100% 同步。嚴防「選項②③④有劃底線，選項①卻遺漏底線」之選項間排版斷層與線索不對稱。
+   - **Document-level Macro Consistency (全卷巨觀政策雙軌檢驗)**:
+     - 在正式出版品與大型結案報告中，應維護全卷排版體例的一致性。嚴防「第壹章背景段落把十八縣市全部加上專名號底線，後續第貳、伍、陸章提到同一批縣市時卻全數放生未標」之雙軌矛盾體例。若全卷正文慣例不標專名號，應建議前言背景統一移除底線；若決定標記，則應全卷統一規範。
+   - **Automated Audit Pipeline**:
+     - 執行 `scripts/layout_visual_qa.py` 內建之 `audit_proper_noun_marks()`，自動穿透 `//w:r[w:rPr/w:u]` 提取底線 runs、自動縫合跨 Run 碎裂片段（如「臺」與「中市」）、自動檢出標點溢劃、職稱誤包與選項間漏標。
+
+
 
 
 ## Word Document Integrity & COM Verification Protocol (Word 文件結構完整性與毀損防呆規範)
